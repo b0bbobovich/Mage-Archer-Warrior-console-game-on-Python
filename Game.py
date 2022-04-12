@@ -1,6 +1,6 @@
 import random
-import time
-
+from queue import Queue
+from bcolors import bcolors
 from PlayerInterface import Player
 from AI import AI
 from User import User
@@ -8,46 +8,108 @@ from User import User
 
 class Game:
     def __init__(self):
+        self.game_settings = None
         self.players_quantity = None
         self.multiplayer = None
-        self.difficulty = None
-        self.players = {}
+        self.players_move_queue = Queue()
+
+        self.players = []
 
     def set_settings(self, game_settings: dict):
+        self.game_settings = game_settings
         self.players_quantity = game_settings['players_quantity']
         self.multiplayer = game_settings['multiplayer']
-        self.difficulty = game_settings['difficulty']
-
-        #heal_param = 25
 
     def run(self):
         moves_counter = 0
 
-        user_name = input('Enter your name: ')
-        user_player = User(user_name)
-        self.players[user_player] = user_player.squad_hp
-
+        self.create_player()
         for _ in range(self.players_quantity-1):
             self.create_ai_player()
 
+        self.form_players_moves_queue()
+        fighters = ''
+        for player in self.players:
+            fighters += (player.player_data['player_name'] + ' vs ')
+
+        print(f'{bcolors.BOLD}Starting fight{bcolors.ENDC} {bcolors.FAIL}{fighters[:-3]}{bcolors.ENDC}')
         while len(self.players) > 1:
             moves_counter += 1
-            print(f'Turn {moves_counter}')
-            for player in self.players:
-                self.new_turn(player, self.players)
+            print(f'{bcolors.WARNING}Turn {moves_counter}{bcolors.ENDC}')
+
+            player = self.get_alive_player()
+            self.new_turn(player)
+
+
+        print(f'{bcolors.BOLD}Winner is {bcolors.ENDC}{bcolors.OKGREEN}{self.players[0].player_data["player_name"]}{bcolors.ENDC}')
+
+    def form_players_moves_queue(self):
+        random.shuffle(self.players)
+        for player in self.players:
+            self.players_move_queue.put(player)
+
+    def create_player(self):
+        user_name = input('Enter your name: ')
+        user_player = User(user_name, self.game_settings)
+        user_player.form_squad()
+        self.players.append(user_player)
 
     def create_ai_player(self):
-        start = time.time()
+        #start = time.time()
         with open('ai_nicknames.txt', 'r') as names_file:
             names = names_file.read().splitlines()
             ai_name = random.choice(names)
-        print(f'file with names opening and reading {time.time()- start} sec')
-        ai_player = AI(ai_name)
-        self.players[ai_player] = ai_player.squad_hp
+        #print(f'file with names opening and reading for {time.time()- start} sec')
+        ai_player = AI(ai_name, self.game_settings)
+        ai_player.form_squad()
+        self.players.append(ai_player)
 
-    def new_turn(self, player: Player, players):
-        if issubclass(type(player), AI):
-            player.act(players)
+    def get_alive_player(self):
+        player = None
+        while not player:
+            if not self.players_move_queue.empty():
+                player = self.players_move_queue.get()
+                if player not in self.players:
+                    player = None
+            else:
+                print('No units in queue')
+                break
+        return player
+
+    def new_turn(self, player: Player):
+
+        result = player.make_move(self.players)
+        self.update_players_data(result)
+
+    def update_players_data(self, result: dict):
+        action = result['action']
+        target_player = result['target_player']
+        target_unit = result['target_unit']
+        value = result['value']
+
+        for unit_data in target_player.player_data['units']:
+            if unit_data['unit_obj'] == target_unit:
+                if action == 'attack':
+                    unit_data['unit_hp'] -= value
+                    if unit_data['unit_hp'] <= 0:
+                        del unit_data
+                        print('del unit data')                               #print
+                    break
+                else:
+                    unit_data['unit_hp'] = value
+                    break
+
+        if not target_player.player_data['units']:
+            print(f'{target_player.player_data["player_name"]} lose the game. All units are dead')
+            self.players.remove(target_player)
+        else:
+            self.players_move_queue.put(target_player)
+
+
+
+
+
+
 
 
 

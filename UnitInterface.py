@@ -1,31 +1,21 @@
-import abc
+import random
 
 
 class Unit:
-    @abc.abstractmethod
-    def __init__(self, hp=0, dmg=0, dodge=0):
+    def __init__(self):
         self.heal_param = 25
-        self.unit_params = {
-            'HP': hp,
-            'DMG': dmg,
-            'DODGE': dodge
-        }
 
-    @abc.abstractmethod
-    def attack(self) -> int:
-        return self.unit_params['DMG']
+    def attack(self, target_unit) -> int:
+        hit = False
+        target_unit_dodge = target_unit.unit_params['DODGE']
+        if random.randint(1, 101) < target_unit_dodge:
+            hit = True
+        return hit
 
-    @abc.abstractmethod
-    def heal(self) -> int:
-        self.unit_params['HP'] += self.unit_params['HP'] * (self.heal_param/100)
-        return int(self.unit_params['HP'])
+    def heal(self, hp: int) -> int:
+        hp += hp * (self.heal_param/100)
+        return int(hp)
 
-    @abc.abstractmethod
-    def dodge(self) -> bool:
-        dodge_res = False
-        if self.unit_params['DODGE']:
-            dodge_res = True
-            return dodge_res
 
 
 
