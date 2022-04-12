@@ -12,7 +12,6 @@ class Game:
         self.players_quantity = None
         self.multiplayer = None
         self.players_move_queue = Queue()
-
         self.players = []
 
     def set_settings(self, game_settings: dict):
@@ -27,57 +26,23 @@ class Game:
         for _ in range(self.players_quantity-1):
             self.create_ai_player()
 
-        self.form_players_moves_queue()
         fighters = ''
         for player in self.players:
             fighters += (player.player_data['player_name'] + ' vs ')
-
         print(f'{bcolors.BOLD}Starting fight{bcolors.ENDC} {bcolors.FAIL}{fighters[:-3]}{bcolors.ENDC}')
+
         while len(self.players) > 1:
-            moves_counter += 1
-            print(f'{bcolors.WARNING}Turn {moves_counter}{bcolors.ENDC}')
-
-            player = self.get_alive_player()
+            if self.players_move_queue.empty():
+                self.form_players_moves_queue()
+                moves_counter += 1
+                print(f'{bcolors.WARNING}Turn {moves_counter}{bcolors.ENDC}')
+            player = self.players_move_queue.get()
+            print(f'{bcolors.OKGREEN}{player.player_data["player_name"]} moving{bcolors.ENDC}')
             self.new_turn(player)
-
 
         print(f'{bcolors.BOLD}Winner is {bcolors.ENDC}{bcolors.OKGREEN}{self.players[0].player_data["player_name"]}{bcolors.ENDC}')
 
-    def form_players_moves_queue(self):
-        random.shuffle(self.players)
-        for player in self.players:
-            self.players_move_queue.put(player)
-
-    def create_player(self):
-        user_name = input('Enter your name: ')
-        user_player = User(user_name, self.game_settings)
-        user_player.form_squad()
-        self.players.append(user_player)
-
-    def create_ai_player(self):
-        #start = time.time()
-        with open('ai_nicknames.txt', 'r') as names_file:
-            names = names_file.read().splitlines()
-            ai_name = random.choice(names)
-        #print(f'file with names opening and reading for {time.time()- start} sec')
-        ai_player = AI(ai_name, self.game_settings)
-        ai_player.form_squad()
-        self.players.append(ai_player)
-
-    def get_alive_player(self):
-        player = None
-        while not player:
-            if not self.players_move_queue.empty():
-                player = self.players_move_queue.get()
-                if player not in self.players:
-                    player = None
-            else:
-                print('No units in queue')
-                break
-        return player
-
     def new_turn(self, player: Player):
-
         result = player.make_move(self.players)
         self.update_players_data(result)
 
@@ -92,9 +57,8 @@ class Game:
                 if action == 'attack':
                     unit_data['unit_hp'] -= value
                     if unit_data['unit_hp'] <= 0:
-                        del unit_data
-                        print('del unit data')                               #print
-                    break
+                        target_player.player_data['units'].remove(unit_data)
+                        break
                 else:
                     unit_data['unit_hp'] = value
                     break
@@ -102,9 +66,24 @@ class Game:
         if not target_player.player_data['units']:
             print(f'{target_player.player_data["player_name"]} lose the game. All units are dead')
             self.players.remove(target_player)
-        else:
-            self.players_move_queue.put(target_player)
 
+    def form_players_moves_queue(self):
+        for player in self.players:
+            self.players_move_queue.put(player)
+
+    def create_player(self):
+        user_name = input('Enter your name: ')
+        user_player = User(user_name, self.game_settings)
+        user_player.form_squad()
+        self.players.append(user_player)
+
+    def create_ai_player(self):
+        with open('ai_nicknames.txt', 'r') as names_file:
+            names = names_file.read().splitlines()
+            ai_name = random.choice(names)
+        ai_player = AI(ai_name, self.game_settings)
+        ai_player.form_squad()
+        self.players.append(ai_player)
 
 
 

@@ -53,18 +53,19 @@ class AI(Player):
         player_units = {}
         for unit_data in target_player.player_data['units']:
             player_units[unit_data['unit_name']] = unit_data['unit_obj']
-        target_unit = random.choice(list(player_units.keys()))
+        target_unit_name = random.choice(list(player_units.keys()))
+        target_unit = player_units.get(target_unit_name)
         active_unit = self.get_alive_unit()
         print(
             f'{bcolors.OKBLUE}{self.player_data["player_name"]} attacking {target_player.player_data["player_name"]}{bcolors.ENDC}')
-        if active_unit.attack(player_units[target_unit]):
+        if active_unit.attack(target_unit):
             dmg = active_unit.unit_params['DMG']
             print(
-                f'{bcolors.OKBLUE}Success attack. {target_player.player_data["player_name"] + "s"} {target_unit} receive {dmg} dmg{bcolors.ENDC}')
+                f'{bcolors.OKBLUE}Success attack. {target_player.player_data["player_name"] + "s"} {target_unit_name} receive {dmg} dmg{bcolors.ENDC}')
         else:
             dmg = 0
             print(
-                f'{bcolors.OKBLUE}Unsuccessful attack. {target_player.player_data["player_name"] + "s"} {target_unit} receive {dmg} dmg{bcolors.ENDC}')
+                f'{bcolors.OKBLUE}Unsuccessful attack. {target_player.player_data["player_name"] + "s"} {target_unit_name} receive {dmg} dmg{bcolors.ENDC}')
 
         self.units_moves_queue.put(active_unit)
         return target_player, target_unit, dmg

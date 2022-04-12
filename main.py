@@ -1,9 +1,10 @@
 from Game import Game
+from bcolors import bcolors
 
 game_settings = {}
-settings = input('Choose game settings: standard or custom: ')
+settings = input(f'Choose game settings: {bcolors.OKGREEN}standard{bcolors.ENDC} or {bcolors.OKGREEN}custom{bcolors.ENDC}: ')
 while settings not in ['standard', 'custom']:
-    print('Choose between standard or custom settings')
+    print(f'Choose between {bcolors.OKGREEN}standard{bcolors.ENDC} or {bcolors.OKGREEN}custom{bcolors.ENDC} settings')
     settings = input('Choose game settings: ')
 
 if settings.lower() == 'standard':

@@ -6,6 +6,7 @@ class User(Player):
     def __init__(self, player_name: str, game_settings: dict):
         super().__init__(player_name)
         self.name = player_name
+        self.players_quantity = game_settings['players_quantity']
         self.squad_size = game_settings['squad_size']
         self.available_units = game_settings['available_units']
 
@@ -37,7 +38,7 @@ class User(Player):
             'target_unit': None,
             'value': None
         }
-        print(f'{bcolors.FAIL}My squad stats: {bcolors.ENDC}')
+        print(f'{bcolors.WARNING}My squad stats: {bcolors.ENDC}')
         self.analise()
         action = input(f'Choose action: {bcolors.OKGREEN}heal{bcolors.ENDC} or {bcolors.FAIL}attack{bcolors.ENDC}: ')
         while action not in ['heal', 'attack']:
@@ -66,15 +67,16 @@ class User(Player):
 
         print(f'{bcolors.WARNING}Enemy stats: {bcolors.ENDC}')
         for enemy_name, enemy in enemies_players.items():
-            print(f'Enemy: {enemy_name}')
+            print(f'{bcolors.FAIL}Enemy: {enemy_name}{bcolors.ENDC}')
             enemy.analise()
-
-        target_player = input(f'Choose enemy: ')
-        while target_player not in list(enemies_players.keys()):
-            print('No such enemy')
-            target_player = input('Choose between available enemies: ')
-
-        target_player = enemies_players.get(target_player)
+        if self.players_quantity > 2:
+            target_enemy = input(f'{bcolors.BOLD}Choose enemy: {bcolors.ENDC}')
+            while target_enemy not in list(enemies_players.keys()):
+                print('No such enemy')
+                target_enemy = input('Choose between available enemies: ')
+        else:
+            target_enemy = list(enemies_players.keys())[0]
+        target_player = enemies_players.get(target_enemy)
         player_units = {}
         for unit_data in target_player.player_data['units']:
             player_units[unit_data['unit_name']] = unit_data['unit_obj']
@@ -86,7 +88,7 @@ class User(Player):
 
         target_unit = player_units.get(target_unit_name)
         active_unit = self.get_alive_unit()
-        if active_unit.attack(player_units[target_unit_name]):
+        if active_unit.attack(target_unit):
             dmg = active_unit.unit_params['DMG']
             print(f'{bcolors.OKBLUE}Success attack. {target_player.player_data["player_name"] + "s"} {target_unit_name} receive {dmg} dmg{bcolors.ENDC}')
         else:
@@ -101,6 +103,7 @@ class User(Player):
             for unit_data in self.player_data['units']:
                 if alive_unit == unit_data['unit_obj']:
                     hp = unit_data['unit_obj'].heal(unit_data['unit_hp'])
+                    print(f'{self.player_data["player_name"]} healing {unit_data["unit_name"]}')
                     self.units_moves_queue.put(alive_unit)
                     return hp, alive_unit
         else:

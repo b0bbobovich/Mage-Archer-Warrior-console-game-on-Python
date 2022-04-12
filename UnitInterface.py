@@ -8,7 +8,8 @@ class Unit:
     def attack(self, target_unit) -> int:
         hit = False
         target_unit_dodge = target_unit.unit_params['DODGE']
-        if random.randint(1, 101) < target_unit_dodge:
+        hit_res = random.randint(1, 101)
+        if hit_res > target_unit_dodge:
             hit = True
         return hit
 
