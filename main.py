@@ -16,7 +16,14 @@ if settings.lower() == 'standard':
         'available_units': ['archer', 'wizard', 'swordsman']
     }
 else:
-    pass
+    players_quantity = int(input('Choose how many players do you want: '))
+    game_settings = {
+        'multiplayer': False,
+        'players_quantity': players_quantity,
+        'squad_size': 3,
+        'difficulty': 'easy',
+        'available_units': ['archer', 'wizard', 'swordsman']
+    }
 
 local_game = Game()
 local_game.set_settings(game_settings)
